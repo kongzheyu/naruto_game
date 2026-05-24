@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>火影忍者手游 - 结印机制模拟器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .state-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: white;
+        }
+
+        .state-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .seal-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .seal-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+        }
+
+        .skill-display {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .skill-slot {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .skill-slot.empty {
+            opacity: 0.5;
+            font-style: italic;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .attack-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 60px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-attack {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .joystick-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .joystick-center {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .joystick-btn {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .joystick-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .joystick-up {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .joystick-down {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .joystick-left {
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .joystick-right {
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .combo-section {
+            margin-top: 20px;
+        }
+
+        .combo-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .btn-execute {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-reset {
+            background: #ff4757;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .log-section {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .highlight {
+            animation: pulse 0.5s ease-in-out;
+            background: rgba(255, 255, 255, 0.4) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍥 结印机制模拟器</h1>
+
+        <!-- 状态显示 -->
+        <div class="state-panel">
+            <div class="state-title">当前状态</div>
+            
+            <div style="text-align: center; margin-bottom: 10px; font-size: 14px;">
+                印槽位 <span style="font-size: 12px;">(旧→新)</span>
+            </div>
+            <div class="seal-display" id="sealDisplay">
+                <div class="seal-slot">2</div>
+                <div class="seal-slot">3</div>
+                <div class="seal-slot">4</div>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 10px; font-size: 14px;">
+                子技能槽位
+            </div>
+            <div class="skill-display" id="skillDisplay">
+                <div class="skill-slot">油火弹</div>
+                <div class="skill-slot empty">空</div>
+            </div>
+        </div>
+
+        <!-- 操作控制 -->
+        <div class="controls">
+            <!-- 普攻 -->
+            <div class="control-group">
+                <span class="control-label">⚔️ 普攻连段</span>
+                <div class="attack-buttons">
+                    <button class="btn btn-attack" onclick="normalAttack(1)">1A</button>
+                    <button class="btn btn-attack" onclick="normalAttack(2)">2A</button>
+                    <button class="btn btn-attack" onclick="normalAttack(3)">3A</button>
+                    <button class="btn btn-attack" onclick="normalAttack(4)">4A</button>
+                    <button class="btn btn-attack" onclick="normalAttack(5)">5A</button>
+                </div>
+            </div>
+
+            <!-- 摇杆 -->
+            <div class="control-group">
+                <span class="control-label">🕹️ 技能摇杆 (冷却8秒)</span>
+                <div class="joystick-container">
+                    <button class="joystick-btn joystick-up" onclick="skillJoystick('up')">⬆️<br>1印</button>
+                    <button class="joystick-btn joystick-left" onclick="skillJoystick('left')">⬅️<br>2印</button>
+                    <div class="joystick-center">技能</div>
+                    <button class="joystick-btn joystick-right" onclick="skillJoystick('right')">➡️<br>3印</button>
+                    <button class="joystick-btn joystick-down" onclick="skillJoystick('down')">⬇️<br>4印</button>
+                </div>
+            </div>
+
+            <!-- 连招输入 -->
+            <div class="combo-section">
+                <span class="control-label">🎯 自定义连招</span>
+                <input 
+                    type="text" 
+                    class="combo-input" 
+                    id="comboInput" 
+                    placeholder="例如: 1A,2A,3A,right,down"
+                >
+                <button class="btn btn-execute" onclick="executeCombo()">执行连招</button>
+                <button class="btn btn-reset" onclick="resetState()">重置状态</button>
+            </div>
+        </div>
+
+        <!-- 操作日志 -->
+        <div class="log-section" id="logSection">
+            <div class="log-entry">🎮 模拟器已就绪，初始状态：印槽[2,3,4]，子技能[油火弹]</div>
+        </div>
+
+        <div class="info-text">
+            💡 提示：普攻必须按顺序1A→2A→3A→4A→5A | 相同技能不会重复加入队列
+        </div>
+    </div>
+
+    <script>
+        // ============ 核心逻辑 ============
+        
+        class HokageShinobi {
+            constructor() {
+                this.sealSlots = [2, 3, 4];  // 印槽位（旧→新）
+                this.skillSlots = ["油火弹"];  // 子技能槽位
+                this.skillCooldown = 0;  // 技能冷却
+                this.logs = [];
+            }
+
+            getSealSet() {
+                return new Set(this.sealSlots);
+            }
+
+            judgeSkill() {
+                const S = this.getSealSet();
+                
+                if (S.has(1) && S.has(2) && S.has(3)) {
+                    return "通灵之术";
+                } else if (S.has(1) && S.has(3) && S.has(4)) {
+                    return "毛针千本";
+                } else if (S.has(1) && S.has(4) && !S.has(3)) {
+                    return "黄泉沼";
+                } else {
+                    return "油火弹";
+                }
+            }
+
+            addSeal(seal) {
+                this.sealSlots.push(seal);
+                if (this.sealSlots.length > 3) {
+                    this.sealSlots.shift();
+                }
+            }
+
+            updateSkills() {
+                const newSkill = this.judgeSkill();
+                
+                // 去重
+                if (this.skillSlots.includes(newSkill)) {
+                    this.logs.push(`当前判定: ${newSkill} (已在队列中，不重复加入)`);
+                    return false;
+                }
+                
+                // 加入队列
+                this.skillSlots.push(newSkill);
+                if (this.skillSlots.length > 2) {
+                    this.skillSlots.shift();
+                }
+                
+                this.logs.push(`新技能加入: ${newSkill}`);
+                return true;
+            }
+
+            normalAttack(stage) {
+                const sealMap = {1: null, 2: 1, 3: 2, 4: 3, 5: 4};
+                const seal = sealMap[stage];
+                
+                if (seal !== null) {
+                    this.addSeal(seal);
+                    this.logs.push(`普攻${stage}段 → 获得${seal}印`);
+                } else {
+                    this.logs.push(`普攻${stage}段 → 无印`);
+                }
+                
+                this.updateSkills();
+                return {
+                    seals: [...this.sealSlots],
+                    skills: [...this.skillSlots],
+                    currentSkill: this.judgeSkill()
+                };
+            }
+
+            skillJoystick(direction) {
+                const directionMap = {
+                    'up': 1,
+                    'left': 2,
+                    'right': 3,
+                    'down': 4
+                };
+                
+                if (!(direction in directionMap)) {
+                    this.logs.push(`错误: 无效方向 ${direction}`);
+                    return null;
+                }
+                
+                const seal = directionMap[direction];
+                this.addSeal(seal);
+                this.logs.push(`摇杆${direction} → 获得${seal}印`);
+                this.updateSkills();
+                
+                return {
+                    seals: [...this.sealSlots],
+                    skills: [...this.skillSlots],
+                    currentSkill: this.judgeSkill()
+                };
+            }
+
+            executeCombo(actions) {
+                this.logs = [];
+                const results = [];
+                
+                for (const action of actions) {
+                    let result;
+                    if (action.endsWith('A') || action.endsWith('a')) {
+                        const stage = parseInt(action[0]);
+                        if (stage >= 1 && stage <= 5) {
+                            result = this.normalAttack(stage);
+                        } else {
+                            this.logs.push(`错误: 无效普攻段数 ${action}`);
+                            continue;
+                        }
+                    } else {
+                        result = this.skillJoystick(action.toLowerCase());
+                    }
+                    
+                    if (result) {
+                        results.push({
+                            action: action,
+                            ...result
+                        });
+                    }
+                }
+                
+                return results;
+            }
+
+            reset() {
+                this.sealSlots = [2, 3, 4];
+                this.skillSlots = ["油火弹"];
+                this.skillCooldown = 0;
+                this.logs = ["🔄 状态已重置"];
+            }
+
+            getState() {
+                return {
+                    seals: [...this.sealSlots],
+                    skills: [...this.skillSlots],
+                    currentSkill: this.judgeSkill(),
+                    sealSet: this.getSealSet()
+                };
+            }
+        }
+
+        // ============ UI 交互 ============
+        
+        const ninja = new HokageShinobi();
+
+        function updateUI() {
+            const state = ninja.getState();
+            
+            // 更新印槽显示
+            const sealDisplay = document.getElementById('sealDisplay');
+            const sealSlots = sealDisplay.querySelectorAll('.seal-slot');
+            state.seals.forEach((seal, index) => {
+                if (index < sealSlots.length) {
+                    sealSlots[index].textContent = seal;
+                    sealSlots[index].classList.add('highlight');
+                    setTimeout(() => sealSlots[index].classList.remove('highlight'), 500);
+                }
+            });
+            
+            // 更新子技能显示
+            const skillDisplay = document.getElementById('skillDisplay');
+            const skillSlots = skillDisplay.querySelectorAll('.skill-slot');
+            
+            // 清空
+            skillSlots.forEach(slot => {
+                slot.textContent = '空';
+                slot.classList.add('empty');
+            });
+            
+            // 填充
+            state.skills.forEach((skill, index) => {
+                if (index < skillSlots.length) {
+                    skillSlots[index].textContent = skill;
+                    skillSlots[index].classList.remove('empty');
+                    skillSlots[index].classList.add('highlight');
+                    setTimeout(() => skillSlots[index].classList.remove('highlight'), 500);
+                }
+            });
+            
+            // 更新日志
+            updateLog();
+        }
+
+        function updateLog() {
+            const logSection = document.getElementById('logSection');
+            logSection.innerHTML = '';
+            
+            const recentLogs = ninja.logs.slice(-10); // 只显示最近10条
+            recentLogs.forEach(log => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.textContent = log;
+                logSection.appendChild(entry);
+            });
+            
+            // 滚动到底部
+            logSection.scrollTop = logSection.scrollHeight;
+        }
+
+        function normalAttack(stage) {
+            ninja.normalAttack(stage);
+            updateUI();
+        }
+
+        function skillJoystick(direction) {
+            ninja.skillJoystick(direction);
+            updateUI();
+        }
+
+        function executeCombo() {
+            const input = document.getElementById('comboInput').value;
+            if (!input.trim()) {
+                alert('请输入连招指令');
+                return;
+            }
+            
+            // 解析输入
+            const actions = input.split(',').map(a => a.trim()).filter(a => a);
+            
+            // 验证指令
+            const validActions = [];
+            for (const action of actions) {
+                if (/^[1-5]a$/i.test(action)) {
+                    validActions.push(action);
+                } else if (['up', 'down', 'left', 'right'].includes(action.toLowerCase())) {
+                    validActions.push(action);
+                } else {
+                    alert(`无效指令: ${action}\n支持: 1A-5A, up, down, left, right`);
+                    return;
+                }
+            }
+            
+            if (validActions.length === 0) {
+                alert('没有有效的指令');
+                return;
+            }
+            
+            ninja.executeCombo(validActions);
+            updateUI();
+        }
+
+        function resetState() {
+            ninja.reset();
+            updateUI();
+            document.getElementById('comboInput').value = '';
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case '1': normalAttack(1); break;
+                case '2': normalAttack(2); break;
+                case '3': normalAttack(3); break;
+                case '4': normalAttack(4); break;
+                case '5': normalAttack(5); break;
+                case 'w':
+                case 'arrowup': skillJoystick('up'); e.preventDefault(); break;
+                case 'a':
+                case 'arrowleft': skillJoystick('left'); e.preventDefault(); break;
+                case 'd':
+                case 'arrowright': skillJoystick('right'); e.preventDefault(); break;
+                case 's':
+                case 'arrowdown': skillJoystick('down'); e.preventDefault(); break;
+                case 'r': resetState(); break;
+                case 'enter': executeCombo(); break;
+            }
+        });
+
+        // 初始更新
+        updateUI();
+    </script>
+</body>
+</html>
